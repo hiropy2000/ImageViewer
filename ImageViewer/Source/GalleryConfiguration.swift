@@ -75,6 +75,15 @@ public enum GalleryConfigurationItem {
     ///Sets the duration of the animation when item is double tapped and transitions between ScaleToAspectFit & ScaleToAspectFill sizes.
     case doubleTapToZoomDuration(TimeInterval)
 
+    /// Option to set zoom when double-tapping an image.
+    case doubleTapToZoomMode(GalleryZoomMode)
+
+    /// Magnification when double-tapping to zoom in
+    case doubleTapToZoomMagnification(CGFloat)
+
+    /// Maximum magnification when zooming in by double-tapping
+    case doubleTapToZoomMagnificationMaximum(CGFloat)
+    
     ///Transition duration for the blur layer component of the overlay when Gallery is being presented.
     case blurPresentDuration(TimeInterval)
 
@@ -180,6 +189,13 @@ public enum GalleryPagingMode {
 
     case standard /// Allows paging through images from 0 to N, when first or last image reached ,horizontal swipe to dismiss kicks in.
     case carousel /// Pages through images from 0 to N and the again 0 to N in a loop, works both directions.
+}
+
+public enum GalleryZoomMode {
+
+    case none /// Double tapping an image does not enlarge it.
+    case fill /// Double-tap the image to zoom in to fit its width and height.
+    case magnification /// Double-tap the image to enlarge it at the specified magnification.
 }
 
 public enum GalleryDisplacementStyle {

@@ -35,6 +35,9 @@ open class ItemBaseController<T: UIView>: UIViewController, ItemController, UIGe
     //CONFIGURATION
     fileprivate var presentationStyle = GalleryPresentationStyle.displacement
     fileprivate var doubleTapToZoomDuration = 0.15
+    fileprivate var doubleTapToZoomMode = GalleryZoomMode.fill
+    fileprivate var doubleTapToZoomMagnification = 2.0
+    fileprivate var doubleTapToZoomMagnificationMaximum = 4.0
     fileprivate var displacementDuration: TimeInterval = 0.55
     fileprivate var reverseDisplacementDuration: TimeInterval = 0.25
     fileprivate var itemFadeDuration: TimeInterval = 0.3
@@ -75,6 +78,9 @@ open class ItemBaseController<T: UIView>: UIViewController, ItemController, UIGe
 
             case .swipeToDismissThresholdVelocity(let velocity):    thresholdVelocity = velocity
             case .doubleTapToZoomDuration(let duration):            doubleTapToZoomDuration = duration
+            case .doubleTapToZoomMode(let mode):                    doubleTapToZoomMode = mode
+            case .doubleTapToZoomMagnification(let scale):          doubleTapToZoomMagnification = scale
+            case .doubleTapToZoomMagnificationMaximum(let scale):   doubleTapToZoomMagnificationMaximum = scale
             case .presentationStyle(let style):                     presentationStyle = style
             case .pagingMode(let mode):                             pagingMode = mode
             case .displacementDuration(let duration):               displacementDuration = duration
@@ -275,24 +281,46 @@ open class ItemBaseController<T: UIView>: UIViewController, ItemController, UIGe
     }
 
     @objc func scrollViewDidDoubleTap(_ recognizer: UITapGestureRecognizer) {
+        switch doubleTapToZoomMode {
+        case .none:
+            break;
 
-        let touchPoint = recognizer.location(ofTouch: 0, in: itemView)
-        let aspectFillScale = aspectFillZoomScale(forBoundingSize: scrollView.bounds.size, contentSize: itemView.bounds.size)
+        case .fill:
+            let touchPoint = recognizer.location(ofTouch: 0, in: itemView)
+            let aspectFillScale = aspectFillZoomScale(forBoundingSize: scrollView.bounds.size, contentSize: itemView.bounds.size)
+    
+            if (scrollView.zoomScale == 1.0 || scrollView.zoomScale > aspectFillScale) {
+    
+                let zoomRectangle = zoomRect(ForScrollView: scrollView, scale: aspectFillScale, center: touchPoint)
+    
+                UIView.animate(withDuration: doubleTapToZoomDuration, animations: { [weak self] in
+    
+                    self?.scrollView.zoom(to: zoomRectangle, animated: false)
+                    })
+            }
+            else  {
+                UIView.animate(withDuration: doubleTapToZoomDuration, animations: {  [weak self] in
+    
+                    self?.scrollView.setZoomScale(1.0, animated: false)
+                    })
+            }
 
-        if (scrollView.zoomScale == 1.0 || scrollView.zoomScale > aspectFillScale) {
+        case .magnification:
+            var scale = scrollView.zoomScale
+            if scale >= doubleTapToZoomMagnificationMaximum {
+                // Equalize when maximum size is exceeded
+                scale = 1.0
+            } else {
+                scale = scale * doubleTapToZoomMagnification
+            }
 
-            let zoomRectangle = zoomRect(ForScrollView: scrollView, scale: aspectFillScale, center: touchPoint)
-
+            let touchPoint = recognizer.location(ofTouch: 0, in: itemView)
+            let zoomRectangle = zoomRect(ForScrollView: scrollView, scale: scale, center: touchPoint)
+            
             UIView.animate(withDuration: doubleTapToZoomDuration, animations: { [weak self] in
 
                 self?.scrollView.zoom(to: zoomRectangle, animated: false)
-                })
-        }
-        else  {
-            UIView.animate(withDuration: doubleTapToZoomDuration, animations: {  [weak self] in
-
-                self?.scrollView.setZoomScale(1.0, animated: false)
-                })
+            })
         }
     }
 
